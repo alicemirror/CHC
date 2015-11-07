@@ -8,5 +8,5 @@ The sources of the repository are released unthe a **CC license 3.0 NC-ND-SA** t
 
 Further information, board features and schematics details are available on Element14 Arduino Blog.
 
-This board is sold with several options on the Drobott.com online robotics portal at the following address:
+This board is available with several cnfigurable options on the Drobott.com online robotics portal at the following address:
 
