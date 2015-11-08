@@ -1,7 +1,6 @@
-/*
-  UpTime.cpp
-  
-  Manages 
+/**
+  \file UpTime.cpp
+  \brief Manages the time the system is powered on. 
  
  */
 

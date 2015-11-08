@@ -1,6 +1,6 @@
 /**
  * \file Version.h
- * \brief Version and Build NumberHelper Class
+ * \brief Version and Build Number Helper Class
  *
  * This helper macros exposes the static methods to get the firmware version and the build number.
  * Use the build() and version() metho5ds anywhere in the program including this file

@@ -1,6 +1,6 @@
 /**
   \file Uptime.h
-  \brief time constans, macros and functions prototypes
+  \brief Time constans, macros and functions prototypes
 */
 
 #ifndef _UpTime_h
@@ -40,23 +40,22 @@ typedef time_t(*getExternalTime)();
 #define numberOfMinutes(_time_) ((_time_ / SECS_PER_MIN) % SECS_PER_MIN) 
 #define numberOfHours(_time_) (( _time_% SECS_PER_DAY) / SECS_PER_HOUR)
 
-int     hour();            // the hour now 
-int     hour(time_t t);    // the hour for the given time
-int     minute();          // the minute now 
-int     minute(time_t t);  // the minute for the given time
-int     second();          // the second now 
-int     second(time_t t);  // the second for the given time
-int     day();             // the day now 
-int     day(time_t t);     // the day for the given time
+int     hour();            ///< the hour now 
+int     hour(time_t t);    ///< the hour for the given time
+int     minute();          ///< the minute now 
+int     minute(time_t t);  ///< the minute for the given time
+int     second();          ///< the second now 
+int     second(time_t t);  ///< the second for the given time
+int     day();             ///< the day now 
+int     day(time_t t);     ///< the day for the given time
 
 void now(unsigned long ms);
 time_t now();
-//void    setTime(time_t t);
 void    adjustTime(long adjustment);
 
-/* low level functions to convert to and from system time                     */
-void breakTime(time_t time, tmElements_t &tm);  // break time_t into elements
-time_t makeTime(tmElements_t &tm);  // convert time elements into time_t
+// Low level functions to convert to and from system time
+void breakTime(time_t time, tmElements_t &tm);  ///< break time_t into elements
+time_t makeTime(tmElements_t &tm);  			///< convert time elements into time_t
 
 #endif /* _Time_h */
 

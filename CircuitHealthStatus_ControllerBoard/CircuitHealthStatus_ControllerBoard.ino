@@ -1,8 +1,33 @@
 
 /**
-  \brief Firmware for the Gizmo2 server controller
+	\file CircuitHealthStatus_ControllerBoard.ino
+	\brief Firmware for the Circuit Health Controller board. Main sketch file
   
-  This firmware is for the board revision 2 + LCD Alpha shift register display board
+	\mainpage
+  This firmware is for the board circuit revision 4 + LCD Alpha shift register display board
+  
+  This is the firmware sketch provided by default with the board. Users can modify parameters,
+  strings and I/O behavior depending on their needs and the installation options.
+  
+  This board runs as an external device able to control - and eventually reset of power on/off your
+  main circuit when some desired or critical / alarming considtions are detected through the sensors.
+  
+  \note The most relevant constants and parameters, subject to modification by the users to optimize and customize the Controller Board behaviour are mentioned in the documentation of the components.
+  
+  \note The mentioned server example settings can be changed to adapt the Controller behaviour to any kind of device
+  or circuit.
+  
+  For further details on the board circuit and behaviour see the following article on <a href=http://www.element14.com/community/groups/arduino/blog/2015/11/07/circuit-health-control-arduino-compatible target=_blank><b>Element14 Arduino blog</b></a>
+  
+  The board is available on <a href=http://drobott.com/item/170/Programmable-Circuit-Health-Controller-Arduino-Compatible target=_nlank><b>Drobott.com</b></a> 
+  
+  For the last updated version clone the repository on <a href=https://github.com/alicemirror/CHC target=_blank><b>GitHub</b></a>
+    
+  \author Enrico Miglino <baleariddynamics@gmail.com>
+  \date November 2015
+  \version 1.1 (see the Version.h include file for the build and version details), hardware version 1.0 revision 4
+  
+  \copyright This software is open source released under the apache license
 */
 #include <AlphaLCD.h>
 #include <Streaming.h>
@@ -14,34 +39,61 @@
 #include "Version.h"
 
 //! Minimum PWM frequency to start fan
+//! Set this value to a value not less than 60 to avoid the motor not starting.
+//! \note This parameter value is preset based on a 60 cm diameter fan 12V powered. Different power motors can require
+//! an higher frequency to start
 #define FANSPEED_MIN 60
+
 //! Maximum PWM frequency to reach
+//! This is the max PWM frequency value. it is not needed to change it
 #define FANSPEED_MAX 255
+
 //! Minimum temperature to start fan
+//! The temperature calculation is based on a case of about 15x15x15 cm internal size.
+//! \note Take in account that the internal case temperature is expected to be lower than the controlled
+//! board temperature. Setting this limit to a too high value may seriously damage the circuits.
 #define TEMP_MIN 30
+
 //! Maximum temperature before overheating error
-#define TEMP_MAX 90
+//! If the internal temperature reach this level the board enter in a overheating risk. Leaving the system
+//! working for long time at high temperatures may produce serious damage to the components.
+#define TEMP_MAX 60
 
 //! Loop update frequency
+//! This value is a timing delay at the end of every cycle in the loop() function
 #define UPDATE_FREQ 10
+
 //! Fan full speed test during initialisation
+//! This value has no influence on the system control. Just to check if the fan is fully operational (at maximum speed)
+//! when the board is powered on.
 #define FAN_TEST_MS 2500
 
 //! PWM Pin conntrolling the fan speed
+//! \warning This value is hardwired and should not be changed!
 #define PWM_FAN 3
 //! Analog pin controlling the temperature
+//! \warning This value is hardwired and should not be changed!
 #define ANALOG_TEMP 0
 //! Reset button pin
+//! \warning This value is hardwired and should not be changed!
 #define RESET_BUTTON 2
 //! Power on/off button pin
+//! \warning This value is hardwired and should not be changed!
 #define POWER_BUTTON 7
 //! Vibration sensor pin
+//! \warning This value is hardwired and should not be changed!
 #define VIBRATION_SENSOR 0
-//! Server control power simulated button pin
+//! Power control simulated button pin
+//! \warning This value is hardwired and should not be changed!
 #define SERVER_POWER_BTN 8
-//! Server control reset simulated button pin
+//! Reset control simulated button pin
+//! \warning This value is hardwired and should not be changed!
 #define SERVER_RESET_BTN 9
 
+// ============================================================
+// Application flags and status constants.
+// Change these values only if you are aware of what this means.
+// ============================================================
 #define SERVER_ON  1    ///< Server powered on
 #define SERVER_OFF 2    ///< Server powered off
 #define SERVER_RESET 3  ///< Server restarting after reset
@@ -60,7 +112,7 @@
 #define BUTTON_PRESS_NONE 0    ///< No buttons has been pressed
 #define MIN_FANSPEED_PERC 10   ///< Minimum fan speed PWM percentage to start the fan motor
 #define RESET_CYCLE_DURATION 500      ///< ms the simulated server reset button should remain pressed
-#define POWERON_CYCLE_DURATION 500    ///< ms the simulated server power button should remain pressed to power off 
+#define POWERON_CYCLE_DURATION 500    ///< ms the simulated server power button should remain pressed to power on 
 #define POWEROFF_CYCLE_DURATION 5000  ///< ms the simulated server power button should remain pressed to power off 
 
 int buttonPressed; ///< the current button pressed
@@ -75,9 +127,10 @@ unsigned long startTimeSec;    ///< Time value for button press validity telay
 
 //! LCD alphanumeric display class instance
 //! Data, latch and clock pins depends on the LCD board connection.
+//! \warning Don't change these settings!
 AlphaLCD lcd(LCDclockPin, LCDlatchPin, LCDdataPin);
 
-//! Setup initialization here
+//! \brief Setup method on power-on
 void setup()  {
   pinMode(PWM_FAN, OUTPUT);
   pinMode(ANALOG_TEMP, INPUT);
@@ -106,7 +159,7 @@ void setup()  {
   
 }
 
-//! Main loop application
+//! \brief Main loop application
 void loop(void) {
   // ==============================  
   // Check the schock risk status
@@ -255,14 +308,14 @@ void loop(void) {
     delay(UPDATE_FREQ);
 }
 
-//! Send a reset signal sequence to the server
+//! \brief Send a reset signal sequence to the server
 void execServerReset() {
   digitalWrite(SERVER_RESET_BTN, HIGH);
   delay(RESET_CYCLE_DURATION);
   digitalWrite(SERVER_RESET_BTN, LOW);
 }
 
-//! Send a reset signal sequence to the server
+//! \brief Send a power on signal sequence to the server
 void execServerPowerOn() {
   digitalWrite(SERVER_POWER_BTN, HIGH);
   delay(POWERON_CYCLE_DURATION);
@@ -278,7 +331,9 @@ void execServerPowerOff() {
 }
 
 /** 
-  \brief Avoid that the user keep the button pressed to make multiple actions together
+  \brief Avoid the user keeping the button pressed
+  
+  \todo Optimize ths method with a more consistent series of samples.
   
   \param btn The digital pin corresponding to the button
 */
@@ -289,7 +344,7 @@ int checkPushReleaseButton(int btn) {
 }
 
 /**
-  \brief Check the health status and update the display
+  \brief Check the health status of the system and update the display
 */
 void checkHealthStatus() {
      temp = readTemp();     // get the temperature
@@ -328,18 +383,23 @@ void checkHealthStatus() {
 }
 
 /**
-  \brief Read the analog value from the LM35 temperature sensor  with the correction
-  constant to convert in Celsius
+  \brief Read the analog value from the LM35 temperature sensor with the correction
+  constant to convert in Celsius.
+  
+  \note Take in account that the LM35 temperature sensor is natively calibrated to provide
+  Celsius measurements.
 */
 int readTemp() {
   temp = analogRead(0);
   return temp * 0.48828125;
 }
 
+// ==============================================================
 // -------- LCD Control functions
+// ==============================================================
 
 /**
-  \brief Notify on the display while a user action is active through a button press sequence
+  \brief Notification while a user action is active through a button press sequence
 */
 void showAction(int btn) {
   lcd.setCursor(0, LCDBOTTOMROW);
@@ -377,7 +437,7 @@ void welcome() {
   lcd.clear();
 }
 
-//! Update the uptime string
+//! \brief Update the uptime string
 void updateTime() {
     int dd, hh, mm, ss;
   
@@ -392,7 +452,7 @@ void updateTime() {
         << _UPTIME_SEP << ((ss<10)?"0":"") << ss;
 }
 
-//! Initialise the Uptime string
+//! \brief Initialise the Uptime string
 void initUptime() {
   lcd.setCursor(LCD_SECTOR1, LCDBOTTOMROW);
   if(serverStatus == SERVER_ON)
@@ -401,7 +461,7 @@ void initUptime() {
     message(_UPTIMEOFF);
 }
 
-//! Show the shock risk string
+//! \brief Show the shock risk string
 void showShock() {
   lcd.clear();
   delay(50);
@@ -411,7 +471,7 @@ void showShock() {
   message(_SHOCK2);
 }
 
-//! Show the reset strings
+//! \brief Show the reset strings
 void showReset() {
   lcd.clear();
   delay(50);
@@ -421,7 +481,7 @@ void showReset() {
   message(_RESET2);
 }
 
-//! Show the powerOn strings
+//! \brief Show the powerOn strings
 void showPowerOn() {
   lcd.clear();
   delay(50);
@@ -431,7 +491,7 @@ void showPowerOn() {
   message(_POWERON2);
 }
 
-//! Show the powerOff strings
+//! \brief Show the powerOff strings
 void showPowerOff() {
   lcd.clear();
   delay(50);
@@ -441,7 +501,7 @@ void showPowerOff() {
   message(_POWEROFF2);
 }
 
-//! Show the server starting message
+//! \brief Show the server starting message
 void showServerStartingStopping() {
   lcd.setCursor(LCD_SECTOR3, LCDBOTTOMROW);
   lcd << _EMPTY_HALF_LINE << _EMPTY_HALF_LINE;
@@ -459,6 +519,18 @@ void showServerStartingStopping() {
 
 /**
   \brief Initialize the temperature and fan fixed text
+
+	prevFanSpeedPerc is used to reduce the number of display updates.
+	Initializing the variable to -90 (that never will occour in the normal
+	conditions) the value is forced for a first update when the program
+	start else the 0% value (fan stopped) is shown only after the fan
+	has started at least one time.
+	
+	prevTemp is used to reduce the number of display updates.
+	Initializing the variable to an almost impossible value the startup
+	condition forces a first update else the temperature is never shown until
+	it does not changes at least one time.
+
 */
 void initFanTemp() {
   lcd.clear();
@@ -467,21 +539,9 @@ void initFanTemp() {
   message(_TEMPERATURE);
   lcd.setCursor(LCD_SECTOR2, LCDTOPROW);
   message(_FANSPEED);
-  /*
-   * This variable is used to reduce the number of display updates.
-   * Initializing the variable to -90 (that never occour in the normal
-   * conditions) the value is forced for a first update when the program
-   * start else the 0% value (fan stopped) is shown only after the fan
-   * has started at least one time.
-   */
+
   prevFanSpeedPerc = -90;
 
-  /*
-   * This variable is used to reduce the number of display updates.
-   * Initializing the variable to an almost impossible value the startup
-   * condition forces a first update else the temperature is never shown until
-   * it does not changes at least one time.
-   */
   prevTemp = -10;
 }
 
@@ -582,7 +642,7 @@ void message(String m, int x, int y) {
 /**
  * \brief Clean the display
  *
- * A delay of 100 ms is added after the hardware clear() call to give the display the time
+ * A delay is added after the hardware clear() call to give the display the time
  * to complete the operation.
  */
 void clean() {
